@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HRCLN DEV — Gestão</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#050816; --bg-card:#0d1224; --bg-card-hover:#121933; --bg-input:#0a0e1e;
+    --gold:#FFD700; --gold-dark:#DAA520; --gold-dim:rgba(255,215,0,0.14);
+    --text:#EDEEF5; --text-dim:#9497AC; --line:rgba(255,215,0,0.16);
+    --ok:#4ADE80; --warn:#FBBF24; --danger:#F87171;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;}
+  h1,h2,h3,.display{font-family:'Space Grotesk',sans-serif;}
+  button{font-family:inherit;cursor:pointer;}
+  input,select,textarea{font-family:inherit;}
+
+  .layout{display:flex;min-height:100vh;}
+
+  /* SIDEBAR */
+  .sidebar{
+    width:240px;flex:0 0 240px;background:var(--bg-card);
+    border-right:1px solid var(--line);padding:24px 14px;
+    position:sticky;top:0;height:100vh;overflow-y:auto;
+  }
+  .logo{font-weight:700;font-size:1.1rem;padding:0 10px 22px;letter-spacing:0.5px;}
+  .logo span{color:var(--gold);}
+  .nav-item{
+    display:flex;align-items:center;gap:10px;
+    padding:11px 12px;border-radius:9px;color:var(--text-dim);
+    font-size:0.9rem;font-weight:500;margin-bottom:2px;
+    transition:background .15s, color .15s;
+  }
+  .nav-item:hover{background:rgba(255,215,0,0.06);color:var(--text);}
+  .nav-item.active{background:var(--gold-dim);color:var(--gold);}
+  .nav-icon{width:18px;text-align:center;}
+
+  /* MAIN */
+  .main{flex:1;padding:32px 40px;max-width:1200px;}
+  .topbar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;flex-wrap:wrap;gap:14px;}
+  .topbar h2{font-size:1.5rem;font-weight:700;}
+  .topbar p{color:var(--text-dim);font-size:0.9rem;margin-top:4px;}
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:10px 18px;border-radius:9px;border:none;font-size:0.88rem;font-weight:600;
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .btn-primary{background:var(--gold);color:#050816;}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(255,215,0,0.2);}
+  .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--text);}
+  .btn-ghost:hover{border-color:var(--gold-dark);background:var(--gold-dim);}
+  .btn-icon{background:transparent;border:1px solid var(--line);color:var(--text-dim);padding:6px 9px;border-radius:7px;font-size:0.8rem;}
+  .btn-icon:hover{color:var(--danger);border-color:var(--danger);}
+  .btn-icon.edit:hover{color:var(--gold);border-color:var(--gold-dark);}
+
+  /* DASHBOARD CARDS */
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:10px;}
+  .stat-card{background:var(--bg-card);border:1px solid var(--line);border-radius:12px;padding:20px;}
+  .stat-card .num{font-size:1.9rem;font-weight:700;font-family:'Space Grotesk',sans-serif;}
+  .stat-card .lbl{font-size:0.82rem;color:var(--text-dim);margin-top:4px;}
+
+  /* TABLE */
+  .table-wrap{background:var(--bg-card);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:10px;}
+  table{width:100%;border-collapse:collapse;}
+  th{
+    text-align:left;font-size:0.74rem;text-transform:uppercase;letter-spacing:0.6px;
+    color:var(--text-dim);padding:14px 18px;border-bottom:1px solid var(--line);font-weight:600;
+  }
+  td{padding:14px 18px;border-bottom:1px solid rgba(255,215,0,0.06);font-size:0.9rem;}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:rgba(255,215,0,0.03);}
+  .empty-row td{color:var(--text-dim);text-align:center;padding:40px 18px;font-size:0.9rem;}
+  .actions-cell{display:flex;gap:6px;justify-content:flex-end;}
+  .badge{
+    font-size:0.72rem;font-weight:600;padding:4px 10px;border-radius:100px;
+    display:inline-block;border:1px solid var(--line);
+  }
+  .badge.ok{color:var(--ok);border-color:rgba(74,222,128,0.3);}
+  .badge.warn{color:var(--warn);border-color:rgba(251,191,36,0.3);}
+  .badge.danger{color:var(--danger);border-color:rgba(248,113,113,0.3);}
+  .badge.neutral{color:var(--gold-dark);}
+
+  /* MODAL */
+  .overlay{
+    position:fixed;inset:0;background:rgba(5,8,22,0.7);backdrop-filter:blur(3px);
+    display:none;align-items:center;justify-content:center;z-index:100;padding:20px;
+  }
+  .overlay.show{display:flex;}
+  .modal{
+    background:var(--bg-card);border:1px solid var(--line);border-radius:14px;
+    padding:28px;width:100%;max-width:440px;max-height:88vh;overflow-y:auto;
+  }
+  .modal h3{font-size:1.15rem;margin-bottom:18px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:0.8rem;color:var(--text-dim);margin-bottom:6px;}
+  .field input,.field select,.field textarea{
+    width:100%;background:var(--bg-input);border:1px solid var(--line);color:var(--text);
+    padding:10px 12px;border-radius:8px;font-size:0.9rem;
+  }
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--gold-dark);}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;}
+
+  .toast{
+    position:fixed;bottom:24px;right:24px;background:var(--bg-card);border:1px solid var(--gold-dark);
+    color:var(--text);padding:14px 20px;border-radius:10px;font-size:0.88rem;
+    opacity:0;transform:translateY(10px);transition:opacity .25s, transform .25s;z-index:200;
+  }
+  .toast.show{opacity:1;transform:none;}
+
+  @media (max-width:800px){
+    .layout{flex-direction:column;}
+    .sidebar{width:100%;flex:none;height:auto;position:relative;
+      display:flex;overflow-x:auto;padding:14px;gap:4px;}
+    .logo{display:none;}
+    .nav-item{white-space:nowrap;}
+    .main{padding:20px;}
+    table{font-size:0.82rem;}
+    th,td{padding:10px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <div class="sidebar" id="sidebar"></div>
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <h2 id="view-title">Dashboard</h2>
+        <p id="view-sub">Visão geral da agência</p>
+      </div>
+      <div style="display:flex;gap:10px;align-items:flex-start;">
+        <button class="btn btn-ghost" id="export-btn" title="Baixar backup de todos os dados">⭳ Backup</button>
+        <button class="btn btn-ghost" id="import-btn" title="Restaurar de um arquivo de backup">⭱ Restaurar</button>
+        <input type="file" id="import-file" accept="application/json" style="display:none;">
+        <button class="btn btn-primary" id="add-btn" style="display:none;">+ Novo</button>
+      </div>
+    </div>
+    <div id="view-content"></div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3 id="modal-title">Novo registro</h3>
+    <form id="modal-form"></form>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="cancel-btn" type="button">Cancelar</button>
+      <button class="btn btn-primary" id="save-btn" type="button">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const PREFIX = 'hrclnmgr:';
+
+const MODULES = {
+  dashboard: { label: 'Dashboard', icon: '◆' },
+  clientes: {
+    label: 'Clientes', icon: '●',
+    fields: [
+      { key: 'cliente', label: 'Cliente', type: 'text', required: true },
+      { key: 'empresa', label: 'Empresa', type: 'text' },
+      { key: 'whatsapp', label: 'WhatsApp', type: 'text' },
+      { key: 'email', label: 'E-mail', type: 'text' },
+      { key: 'cidade', label: 'Cidade', type: 'text' },
+      { key: 'status', label: 'Status', type: 'select', options: ['Ativo','Prospecção','Inativo'] }
+    ],
+    statusColor: { 'Ativo':'ok', 'Prospecção':'warn', 'Inativo':'danger' }
+  },
+  portfolio: {
+    label: 'Portfólio', icon: '▣',
+    fields: [
+      { key: 'cliente', label: 'Cliente', type: 'text', required: true },
+      { key: 'projeto', label: 'Projeto', type: 'text', required: true },
+      { key: 'categoria', label: 'Categoria', type: 'text' },
+      { key: 'link', label: 'Link (GitHub Pages / domínio)', type: 'text' },
+      { key: 'valor', label: 'Valor (R$)', type: 'text' }
+    ]
+  },
+  financeiro: {
+    label: 'Financeiro', icon: '$',
+    fields: [
+      { key: 'data', label: 'Data', type: 'date' },
+      { key: 'cliente', label: 'Cliente', type: 'text' },
+      { key: 'descricao', label: 'Descrição', type: 'text' },
+      { key: 'entrada', label: 'Entrada (R$)', type: 'text' },
+      { key: 'saida', label: 'Saída (R$)', type: 'text' },
+      { key: 'status', label: 'Status', type: 'select', options: ['Pago','Pendente','Atrasado'] }
+    ],
+    statusColor: { 'Pago':'ok', 'Pendente':'warn', 'Atrasado':'danger' }
+  },
+  orcamentos: {
+    label: 'Orçamentos', icon: '≡',
+    fields: [
+      { key: 'cliente', label: 'Cliente', type: 'text', required: true },
+      { key: 'servico', label: 'Serviço', type: 'text' },
+      { key: 'valor', label: 'Valor (R$)', type: 'text' },
+      { key: 'data', label: 'Data', type: 'date' },
+      { key: 'status', label: 'Status', type: 'select', options: ['Enviado','Aprovado','Recusado'] }
+    ],
+    statusColor: { 'Aprovado':'ok', 'Enviado':'warn', 'Recusado':'danger' }
+  },
+  contratos: {
+    label: 'Contratos', icon: '▤',
+    fields: [
+      { key: 'cliente', label: 'Cliente', type: 'text', required: true },
+      { key: 'projeto', label: 'Projeto', type: 'text' },
+      { key: 'assinado', label: 'Assinado', type: 'select', options: ['Sim','Não'] },
+      { key: 'inicio', label: 'Início', type: 'date' },
+      { key: 'fim', label: 'Fim', type: 'date' }
+    ],
+    statusColor: { 'Sim':'ok', 'Não':'danger' }, statusField: 'assinado'
+  },
+  dominios: {
+    label: 'Domínios', icon: '◈',
+    fields: [
+      { key: 'cliente', label: 'Cliente', type: 'text', required: true },
+      { key: 'dominio', label: 'Domínio', type: 'text' },
+      { key: 'expiracao', label: 'Expiração', type: 'date' },
+      { key: 'ssl', label: 'SSL', type: 'select', options: ['Ativo','Expirado','N/A'] },
+      { key: 'renovar', label: 'Renovar', type: 'select', options: ['Sim','Não'] }
+    ]
+  },
+  hospedagem: {
+    label: 'Hospedagem', icon: '☁',
+    fields: [
+      { key: 'cliente', label: 'Cliente', type: 'text', required: true },
+      { key: 'provedor', label: 'Provedor', type: 'text' },
+      { key: 'plano', label: 'Plano', type: 'text' },
+      { key: 'renovacao', label: 'Renovação', type: 'date' },
+      { key: 'status', label: 'Status', type: 'select', options: ['Ativo','Pendente','Cancelado'] }
+    ],
+    statusColor: { 'Ativo':'ok', 'Pendente':'warn', 'Cancelado':'danger' }
+  },
+  manutencao: {
+    label: 'Manutenção', icon: '⚙',
+    fields: [
+      { key: 'cliente', label: 'Cliente', type: 'text', required: true },
+      { key: 'plano', label: 'Plano', type: 'text' },
+      { key: 'mensalidade', label: 'Mensalidade (R$)', type: 'text' },
+      { key: 'vencimento', label: 'Próx. Vencimento', type: 'date' },
+      { key: 'status', label: 'Status', type: 'select', options: ['Em dia','Atrasado','Cancelado'] }
+    ],
+    statusColor: { 'Em dia':'ok', 'Atrasado':'danger', 'Cancelado':'neutral' }
+  },
+  chamados: {
+    label: 'Chamados', icon: '✆',
+    fields: [
+      { key: 'data', label: 'Data', type: 'date' },
+      { key: 'cliente', label: 'Cliente', type: 'text', required: true },
+      { key: 'solicitacao', label: 'Solicitação', type: 'text' },
+      { key: 'prioridade', label: 'Prioridade', type: 'select', options: ['Baixa','Média','Alta','Urgente'] },
+      { key: 'status', label: 'Status', type: 'select', options: ['Aberto','Em andamento','Resolvido'] }
+    ],
+    statusColor: { 'Resolvido':'ok', 'Em andamento':'warn', 'Aberto':'danger' }
+  },
+  agenda: {
+    label: 'Agenda', icon: '▦',
+    fields: [
+      { key: 'data', label: 'Data', type: 'date' },
+      { key: 'compromisso', label: 'Compromisso', type: 'text', required: true },
+      { key: 'cliente', label: 'Cliente', type: 'text' },
+      { key: 'observacoes', label: 'Observações', type: 'text' }
+    ]
+  }
+};
+
+let currentView = 'dashboard';
+let editingId = null;
+const cache = {};
+
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+async function loadModule(key){
+  if(cache[key]) return cache[key];
+  try{
+    const raw = localStorage.getItem(PREFIX + key);
+    cache[key] = raw ? JSON.parse(raw) : [];
+  }catch(e){
+    cache[key] = [];
+  }
+  return cache[key];
+}
+
+async function saveModuleData(key, data){
+  cache[key] = data;
+  try{
+    localStorage.setItem(PREFIX + key, JSON.stringify(data));
+    return true;
+  }catch(e){
+    console.error('Erro ao salvar', e);
+    showToast('Erro ao salvar — armazenamento cheio ou bloqueado');
+    return false;
+  }
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=> t.classList.remove('show'), 2200);
+}
+
+function buildSidebar(){
+  const sidebar = document.getElementById('sidebar');
+  sidebar.innerHTML = `<div class="logo">HRCLN<span>DEV</span></div>` +
+    Object.keys(MODULES).map(key => `
+      <div class="nav-item ${key===currentView?'active':''}" data-view="${key}">
+        <span class="nav-icon">${MODULES[key].icon}</span> ${MODULES[key].label}
+      </div>
+    `).join('');
+  sidebar.querySelectorAll('.nav-item').forEach(el=>{
+    el.addEventListener('click', ()=> switchView(el.dataset.view));
+  });
+}
+
+async function switchView(view){
+  currentView = view;
+  buildSidebar();
+  const addBtn = document.getElementById('add-btn');
+  const title = document.getElementById('view-title');
+  const sub = document.getElementById('view-sub');
+
+  if(view === 'dashboard'){
+    addBtn.style.display = 'none';
+    title.textContent = 'Dashboard';
+    sub.textContent = 'Visão geral da agência';
+    await renderDashboard();
+    return;
+  }
+
+  const mod = MODULES[view];
+  addBtn.style.display = 'inline-flex';
+  title.textContent = mod.label;
+  sub.textContent = `${mod.label} — gestão de registros`;
+  await renderTable(view);
+}
+
+async function renderDashboard(){
+  const content = document.getElementById('view-content');
+  const keys = Object.keys(MODULES).filter(k=>k!=='dashboard');
+  const counts = {};
+  for(const k of keys){ counts[k] = (await loadModule(k)).length; }
+
+  content.innerHTML = `
+    <div class="stats-grid">
+      ${keys.map(k=>`
+        <div class="stat-card">
+          <div class="num">${counts[k]}</div>
+          <div class="lbl">${MODULES[k].label}</div>
+        </div>
+      `).join('')}
+    </div>
+    <p style="color:var(--text-dim);font-size:0.85rem;margin-top:20px;">
+      Use o menu ao lado para adicionar e gerenciar registros de cada área. Os dados ficam salvos automaticamente.
+    </p>
+  `;
+}
+
+function statusBadge(mod, row){
+  const field = mod.statusField || 'status';
+  const val = row[field];
+  if(!val) return '';
+  const cls = (mod.statusColor && mod.statusColor[val]) || 'neutral';
+  return `<span class="badge ${cls}">${val}</span>`;
+}
+
+async function renderTable(view){
+  const mod = MODULES[view];
+  const data = await loadModule(view);
+  const content = document.getElementById('view-content');
+  const hasStatus = mod.fields.some(f => f.key === (mod.statusField||'status'));
+  const displayFields = mod.fields.filter(f => f.key !== (mod.statusField||'status'));
+
+  let rowsHtml;
+  if(data.length === 0){
+    rowsHtml = `<tr class="empty-row"><td colspan="${displayFields.length + (hasStatus?2:1)}">Nenhum registro ainda. Clique em "+ Novo" para adicionar.</td></tr>`;
+  } else {
+    rowsHtml = data.map(row => `
+      <tr>
+        ${displayFields.map(f => {
+          let val = row[f.key] || '—';
+          if(f.key === 'link' && row[f.key]){
+            val = `<a href="${row[f.key]}" target="_blank" style="color:var(--gold);">Abrir ↗</a>`;
+          }
+          return `<td>${val}</td>`;
+        }).join('')}
+        ${hasStatus ? `<td>${statusBadge(mod,row)}</td>` : ''}
+        <td class="actions-cell">
+          <button class="btn-icon edit" data-action="edit" data-id="${row.id}">✎</button>
+          <button class="btn-icon" data-action="delete" data-id="${row.id}">✕</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  content.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            ${displayFields.map(f=>`<th>${f.label}</th>`).join('')}
+            ${hasStatus ? '<th>Status</th>' : ''}
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    </div>
+  `;
+
+  content.querySelectorAll('[data-action="edit"]').forEach(btn=>{
+    btn.addEventListener('click', ()=> openModal(view, btn.dataset.id));
+  });
+  content.querySelectorAll('[data-action="delete"]').forEach(btn=>{
+    btn.addEventListener('click', ()=> deleteRow(view, btn.dataset.id));
+  });
+}
+
+async function deleteRow(view, id){
+  if(!confirm('Excluir este registro?')) return;
+  const data = await loadModule(view);
+  const updated = data.filter(r => r.id !== id);
+  await saveModuleData(view, updated);
+  showToast('Registro excluído');
+  renderTable(view);
+}
+
+function openModal(view, id){
+  editingId = id || null;
+  const mod = MODULES[view];
+  const overlay = document.getElementById('overlay');
+  const form = document.getElementById('modal-form');
+  const title = document.getElementById('modal-title');
+  title.textContent = id ? `Editar ${mod.label.slice(0,-1) || mod.label}` : `Novo registro — ${mod.label}`;
+
+  let existing = {};
+  if(id){
+    existing = cache[view].find(r => r.id === id) || {};
+  }
+
+  form.innerHTML = mod.fields.map(f => {
+    if(f.type === 'select'){
+      return `
+        <div class="field">
+          <label>${f.label}</label>
+          <select name="${f.key}">
+            <option value="">—</option>
+            ${f.options.map(o=>`<option value="${o}" ${existing[f.key]===o?'selected':''}>${o}</option>`).join('')}
+          </select>
+        </div>`;
+    }
+    return `
+      <div class="field">
+        <label>${f.label}</label>
+        <input type="${f.type==='date'?'date':'text'}" name="${f.key}" value="${existing[f.key]||''}" />
+      </div>`;
+  }).join('');
+
+  overlay.dataset.view = view;
+  overlay.classList.add('show');
+}
+
+function closeModal(){
+  document.getElementById('overlay').classList.remove('show');
+  editingId = null;
+}
+
+async function saveModal(){
+  const view = document.getElementById('overlay').dataset.view;
+  const mod = MODULES[view];
+  const form = document.getElementById('modal-form');
+  const formData = new FormData(form);
+  const record = {};
+  mod.fields.forEach(f => { record[f.key] = (formData.get(f.key) || '').trim(); });
+
+  const requiredField = mod.fields.find(f => f.required);
+  if(requiredField && !record[requiredField.key]){
+    showToast(`Preencha "${requiredField.label}"`);
+    return;
+  }
+
+  const data = await loadModule(view);
+  if(editingId){
+    const idx = data.findIndex(r => r.id === editingId);
+    if(idx > -1) data[idx] = { ...data[idx], ...record };
+  } else {
+    record.id = uid();
+    data.push(record);
+  }
+  await saveModuleData(view, data);
+  closeModal();
+  showToast('Salvo com sucesso');
+  renderTable(view);
+}
+
+document.getElementById('add-btn').addEventListener('click', ()=> openModal(currentView, null));
+document.getElementById('cancel-btn').addEventListener('click', closeModal);
+document.getElementById('save-btn').addEventListener('click', saveModal);
+document.getElementById('overlay').addEventListener('click', (e)=>{ if(e.target.id==='overlay') closeModal(); });
+
+async function seedIfEmpty(){
+  const clientes = await loadModule('clientes');
+  if(clientes.length === 0){
+    const seed = ['Mirian','Tia LU','Julio','Lincoln','Claudio','Dilma'].map(nome => ({
+      id: uid(), cliente: nome, empresa:'', whatsapp:'', email:'', cidade:'', status:'Ativo'
+    }));
+    await saveModuleData('clientes', seed);
+  }
+  const portfolio = await loadModule('portfolio');
+  if(portfolio.length === 0){
+    const seed = [
+      { cliente:'Mirian', projeto:'Daily Fashion', categoria:'Moda', link:'https://hercullanohrcln.github.io/site-daily-fashion/', valor:'' },
+      { cliente:'Tia LU', projeto:'Atelier do Sabor', categoria:'Alimentação', link:'https://hercullanohrcln.github.io/atelier-do-sabor/', valor:'' },
+      { cliente:'Julio', projeto:'Site Pastor Júlio', categoria:'Institucional', link:'https://hercullanohrcln.github.io/site-pastor-julio/', valor:'' },
+      { cliente:'Lincoln', projeto:'HUEBRA', categoria:'Empresarial', link:'https://hercullanohrcln.github.io/huebra-site/', valor:'' },
+      { cliente:'Claudio', projeto:'CM Construção', categoria:'Construção', link:'https://hercullanohrcln.github.io/cm-construcao/', valor:'' },
+      { cliente:'Dilma', projeto:'Landing Page Empréstimo', categoria:'Landing Page', link:'https://hercullanohrcln.github.io/emprestimo/', valor:'' }
+    ].map(r => ({ ...r, id: uid() }));
+    await saveModuleData('portfolio', seed);
+  }
+}
+
+async function exportBackup(){
+  const all = {};
+  for(const key of Object.keys(MODULES)){
+    if(key === 'dashboard') continue;
+    all[key] = await loadModule(key);
+  }
+  const blob = new Blob([JSON.stringify(all, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `hrcln-dev-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Backup baixado');
+}
+
+function importBackup(file){
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try{
+      const data = JSON.parse(e.target.result);
+      for(const key of Object.keys(data)){
+        if(MODULES[key]) await saveModuleData(key, data[key]);
+      }
+      showToast('Backup restaurado');
+      switchView(currentView);
+    }catch(err){
+      showToast('Arquivo de backup inválido');
+    }
+  };
+  reader.readAsText(file);
+}
+
+document.getElementById('export-btn').addEventListener('click', exportBackup);
+document.getElementById('import-btn').addEventListener('click', ()=> document.getElementById('import-file').click());
+document.getElementById('import-file').addEventListener('change', (e)=>{
+  if(e.target.files[0]) importBackup(e.target.files[0]);
+  e.target.value = '';
+});
+
+(async function init(){
+  buildSidebar();
+  await seedIfEmpty();
+  await switchView('dashboard');
+})();
+</script>
+</body>
+</html>
